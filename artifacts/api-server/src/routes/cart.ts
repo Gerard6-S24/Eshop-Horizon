@@ -59,13 +59,13 @@ router.post("/cart", async (req, res) => {
   try {
     const parsed = AddToCartBody.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid request body" });
+      res.status(400).json({ error: "Invalid request body" }); return;
     }
     const { productId, quantity } = parsed.data;
 
     const [product] = await db.select().from(productsTable).where(eq(productsTable.id, productId));
     if (!product) {
-      return res.status(404).json({ error: "Product not found" });
+      res.status(404).json({ error: "Product not found" }); return;
     }
 
     const sessionId = getSessionId(req, res);
@@ -96,13 +96,13 @@ router.patch("/cart/:itemId", (req, res) => {
   try {
     const parsed = UpdateCartItemBody.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Invalid request body" });
+      res.status(400).json({ error: "Invalid request body" }); return;
     }
     const sessionId = getSessionId(req, res);
     const cart = carts.get(sessionId) ?? { items: [] };
     const item = cart.items.find((i) => i.id === req.params.itemId);
     if (!item) {
-      return res.status(404).json({ error: "Cart item not found" });
+      res.status(404).json({ error: "Cart item not found" }); return;
     }
     item.quantity = parsed.data.quantity;
     if (item.quantity <= 0) {

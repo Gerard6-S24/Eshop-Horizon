@@ -29,7 +29,7 @@ router.get("/products/:slug", async (req, res) => {
   try {
     const [product] = await db.select().from(productsTable).where(eq(productsTable.slug, req.params.slug));
     if (!product) {
-      return res.status(404).json({ error: "Product not found" });
+      res.status(404).json({ error: "Product not found" }); return;
     }
     res.json(formatProduct(product));
   } catch (err) {

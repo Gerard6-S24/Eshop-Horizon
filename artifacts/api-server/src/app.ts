@@ -26,7 +26,13 @@ app.use(
   }),
 );
 app.use(cors());
-app.use(express.json());
+
+// Capture raw body for webhook HMAC verification alongside JSON parsing
+app.use(express.json({
+  verify: (req, _res, buf) => {
+    (req as any).rawBody = buf;
+  },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);

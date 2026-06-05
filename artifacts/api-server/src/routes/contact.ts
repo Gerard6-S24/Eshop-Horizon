@@ -7,7 +7,7 @@ router.post("/contact", async (req, res) => {
   try {
     const parsed = SubmitContactBody.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Validation failed" });
+      res.status(400).json({ error: "Validation failed" }); return;
     }
     const { name, email, message } = parsed.data;
     req.log.info({ name, email }, "Contact form submission received");

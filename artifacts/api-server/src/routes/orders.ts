@@ -10,7 +10,7 @@ router.post("/orders", async (req, res) => {
   try {
     const parsed = CreateOrderBody.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: "Validation failed" });
+      res.status(400).json({ error: "Validation failed" }); return;
     }
     const body = parsed.data;
 
@@ -48,10 +48,10 @@ router.post("/orders", async (req, res) => {
 router.get("/orders/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) return res.status(400).json({ error: "Invalid order ID" });
+    if (isNaN(id)) res.status(400).json({ error: "Invalid order ID" }); return;
 
     const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id));
-    if (!order) return res.status(404).json({ error: "Order not found" });
+    if (!order) res.status(404).json({ error: "Order not found" }); return;
 
     res.json(formatOrder(order));
   } catch (err) {
