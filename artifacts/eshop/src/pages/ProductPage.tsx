@@ -179,7 +179,21 @@ export default function ProductPage() {
           </div>
           <div className="max-w-2xl text-gray-700 leading-relaxed text-sm">
             {tab === "description" && <p>{product.description}</p>}
-            {tab === "ingredients" && <p>{product.ingredients ?? "Composants naturels sélectionnés. Voir l'emballage pour la liste complète."}</p>}
+            {tab === "ingredients" && (
+              product.ingredients
+                ? <ul className="space-y-3">
+                    {product.ingredients.split("\n").filter(Boolean).map((line, i) => {
+                      const [label, ...rest] = line.split(" — ");
+                      return (
+                        <li key={i} className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 py-2 border-b border-[#F0E9D8] last:border-0">
+                          <span className="font-semibold text-[#2D2D2D] whitespace-nowrap">{label.trim()}</span>
+                          {rest.length > 0 && <span className="text-gray-500">{rest.join(" — ")}</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                : <p className="text-gray-500">Composants naturels sélectionnés. Voir l'emballage pour la liste complète.</p>
+            )}
             {tab === "utilisation" && <p>{product.usage ?? "Suivez les instructions figurant sur l'emballage."}</p>}
             {tab === "avis" && (
               <div className="space-y-4">
