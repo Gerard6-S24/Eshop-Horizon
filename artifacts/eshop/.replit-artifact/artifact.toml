@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "E-Shop Horizon — PetCare"
+version = "1.0.0"
+id = "artifacts/eshop"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25731
+
+[services.development]
+run = "pnpm --filter @workspace/eshop run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/eshop", "run", "build" ]
+publicDir = "artifacts/eshop/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25731"
+BASE_PATH = "/"

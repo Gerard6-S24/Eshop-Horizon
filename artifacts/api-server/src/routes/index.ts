@@ -1,8 +1,18 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
+import productsRouter from "./products";
+import bundlesRouter from "./bundles";
+import cartRouter from "./cart";
+import ordersRouter from "./orders";
+import contactRouter from "./contact";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(productsRouter);
+router.use(bundlesRouter);
+router.use(cartRouter);
+router.use(ordersRouter);
+router.use(contactRouter);
 
 export default router;
