@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { trackAddToCart } from "../services/metaPixel";
 
 export interface CartItem {
   id: string;
@@ -44,16 +45,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   const addItem = useCallback((item: Omit<CartItem, "id" | "quantity"> & { quantity?: number }) => {
+    const qty = item.quantity ?? 1;
+
+    // ── Meta Pixel: AddToCart ──────────────────────────────
+    trackAddToCart({
+      contentId: String(item.productId),
+      contentName: item.name,
+      value: item.price * qty,
+      quantity: qty,
+    });
+
     setItems(prev => {
       const existing = prev.find(i => i.productId === item.productId);
       if (existing) {
         return prev.map(i =>
           i.productId === item.productId
-            ? { ...i, quantity: i.quantity + (item.quantity ?? 1) }
+            ? { ...i, quantity: i.quantity + qty }
             : i
         );
       }
-      return [...prev, { ...item, id: crypto.randomUUID(), quantity: item.quantity ?? 1 }];
+      return [...prev, { ...item, id: crypto.randomUUID(), quantity: qty }];
     });
   }, []);
 

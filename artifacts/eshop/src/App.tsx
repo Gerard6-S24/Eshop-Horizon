@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "./context/CartContext";
 import { Header } from "./components/Header";
@@ -15,6 +16,7 @@ import CGV from "./pages/legal/CGV";
 import PolitiqueRetour from "./pages/legal/PolitiqueRetour";
 import PolitiqueConfidentialite from "./pages/legal/PolitiqueConfidentialite";
 import Expedition from "./pages/legal/Expedition";
+import { trackPageView } from "./services/metaPixel";
 
 function NotFound() {
   return (
@@ -28,6 +30,15 @@ function NotFound() {
   );
 }
 
+/** Refire PageView à chaque changement de route (SPA navigation). */
+function PageViewTracker() {
+  const [location] = useLocation();
+  useEffect(() => {
+    trackPageView();
+  }, [location]);
+  return null;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -39,21 +50,24 @@ const queryClient = new QueryClient({
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/produits" component={Products} />
-      <Route path="/produits/:slug" component={ProductPage} />
-      <Route path="/panier" component={Cart} />
-      <Route path="/checkout" component={Checkout} />
-      <Route path="/merci" component={Merci} />
-      <Route path="/contact" component={Contact} />
-      <Route path="/notre-histoire" component={NotreHistoire} />
-      <Route path="/cgv" component={CGV} />
-      <Route path="/politique-retour" component={PolitiqueRetour} />
-      <Route path="/politique-confidentialite" component={PolitiqueConfidentialite} />
-      <Route path="/expedition" component={Expedition} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      <PageViewTracker />
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/produits" component={Products} />
+        <Route path="/produits/:slug" component={ProductPage} />
+        <Route path="/panier" component={Cart} />
+        <Route path="/checkout" component={Checkout} />
+        <Route path="/merci" component={Merci} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/notre-histoire" component={NotreHistoire} />
+        <Route path="/cgv" component={CGV} />
+        <Route path="/politique-retour" component={PolitiqueRetour} />
+        <Route path="/politique-confidentialite" component={PolitiqueConfidentialite} />
+        <Route path="/expedition" component={Expedition} />
+        <Route component={NotFound} />
+      </Switch>
+    </>
   );
 }
 
