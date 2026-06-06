@@ -3,12 +3,15 @@ import { db } from "@workspace/db";
 import { ordersCjTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { createCjOrder, mapAddressToCj } from "../services/cjService";
+import { verifyGeniusPayToken } from "../services/geniusPayService";
 
 const router = Router();
 
 interface CheckoutBody {
   orderId: string;
   paymentToken: string;
+  amount: number;
+  currency: string;
   customerEmail: string;
   firstName: string;
   lastName: string;
@@ -23,13 +26,22 @@ interface CheckoutBody {
 router.post("/checkout", async (req, res) => {
   const body = req.body as CheckoutBody;
 
-  const { orderId, paymentToken, customerEmail, firstName, lastName, phone, address, city, postalCode, country, products } = body;
+  const { orderId, paymentToken, amount, currency = "EUR", customerEmail, firstName, lastName, phone, address, city, postalCode, country, products } = body;
 
   if (!orderId || !paymentToken || !customerEmail || !products?.length) {
     res.status(400).json({ error: "Missing required fields" });
     return;
   }
 
+  // ── 1. Verify payment server-side using GENIUS_PAY_SECRET_KEY ─────────────
+  const verification = await verifyGeniusPayToken(paymentToken, amount ?? 0, currency);
+  if (!verification.verified) {
+    req.log.warn({ orderId, paymentToken, error: verification.error }, "GeniusPay verification failed");
+    res.status(402).json({ error: "Paiement non vérifié", detail: verification.error });
+    return;
+  }
+
+  // ── 2. Idempotency guard ──────────────────────────────────────────────────
   const [existing] = await db.select().from(ordersCjTable).where(eq(ordersCjTable.orderId, orderId));
   if (existing?.status === "submitted") {
     res.json({ success: true, cjOrderId: existing.cjOrderId, orderId });

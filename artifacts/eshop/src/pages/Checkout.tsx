@@ -103,6 +103,8 @@ export default function Checkout() {
         body: JSON.stringify({
           orderId,
           paymentToken: result.paymentToken,
+          amount: total,
+          currency: "EUR",
           customerEmail: form.email,
           ...form,
           products,
