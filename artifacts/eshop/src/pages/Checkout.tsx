@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ShieldCheck, Lock } from "lucide-react";
-import { useCreateOrder } from "@workspace/api-client-react";
+import { ShieldCheck, Lock, CreditCard, ChevronRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { processPayment, generateOrderId } from "../services/geniusPay";
 
 const COUNTRIES = [
   { code: "FR", name: "France" },
@@ -31,16 +31,20 @@ interface FormData {
   country: string;
 }
 
+type Step = "info" | "payment" | "processing";
+
 export default function Checkout() {
   const [, navigate] = useLocation();
   const { items, total, subtotal, shipping, freeShipping, clearCart } = useCart();
-  const createOrder = useCreateOrder();
 
+  const [step, setStep] = useState<Step>("info");
+  const [orderId] = useState(() => generateOrderId());
   const [form, setForm] = useState<FormData>({
     firstName: "", lastName: "", email: "", phone: "",
-    address: "", city: "", postalCode: "", country: "FR"
+    address: "", city: "", postalCode: "", country: "FR",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [payError, setPayError] = useState<string | null>(null);
 
   const formatPrice = (n: number) => n.toFixed(2).replace(".", ",") + "€";
 
@@ -56,26 +60,74 @@ export default function Checkout() {
     return errs;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleInfoNext = (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
+    setStep("payment");
+  };
+
+  const handlePayment = async () => {
+    setPayError(null);
+    setStep("processing");
 
     try {
-      const order = await createOrder.mutateAsync({
-        data: {
-          ...form,
-          currency: "EUR",
-          items: items.map(i => ({ productId: i.productId, quantity: i.quantity, price: i.price }))
-        }
+      const result = await processPayment({
+        orderId,
+        amount: total,
+        currency: "EUR",
+        description: `Commande PetCare Horizon ${orderId}`,
+        customer: {
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          phone: form.phone,
+        },
       });
+
+      if (!result.success) {
+        setPayError(result.error ?? "Paiement refusé. Veuillez réessayer.");
+        setStep("payment");
+        return;
+      }
+
+      const products = items.map(i => ({
+        vid: String(i.productId),
+        quantity: i.quantity,
+      }));
+
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          paymentToken: result.paymentToken,
+          customerEmail: form.email,
+          ...form,
+          products,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as any).error ?? `Erreur serveur ${res.status}`);
+      }
+
       clearCart();
-      navigate(`/merci?orderId=${order.id}`);
+      navigate(`/merci?orderId=${orderId}`);
     } catch (err) {
-      console.error("Order failed", err);
+      const msg = err instanceof Error ? err.message : "Erreur inattendue";
+      setPayError(msg);
+      setStep("payment");
     }
   };
+
+  useEffect(() => {
+    if (step === "payment") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [step]);
 
   const field = (key: keyof FormData, label: string, type = "text", placeholder = "") => (
     <div>
@@ -100,14 +152,131 @@ export default function Checkout() {
     );
   }
 
+  const OrderSummary = () => (
+    <div className="bg-white rounded-xl p-6 border border-[#E8DFC8] sticky top-24">
+      <h2 className="font-serif font-bold text-lg text-[#2D2D2D] mb-4">Votre commande</h2>
+      <div className="space-y-3 mb-4">
+        {items.map(item => (
+          <div key={item.id} className="flex justify-between text-sm">
+            <span className="text-gray-600 flex-1 mr-2">{item.name} × {item.quantity}</span>
+            <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-[#E8DFC8] pt-3 space-y-2">
+        <div className="flex justify-between text-sm text-gray-600">
+          <span>Sous-total</span>
+          <span>{formatPrice(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-sm text-gray-600">
+          <span>Livraison</span>
+          <span className={freeShipping ? "text-[#4A7C59]" : ""}>{freeShipping ? "Gratuite" : formatPrice(shipping)}</span>
+        </div>
+        <div className="flex justify-between font-bold text-[#2D2D2D] pt-2">
+          <span>Total</span>
+          <span className="text-xl text-[#4A7C59]">{formatPrice(total)}</span>
+        </div>
+      </div>
+      <div className="mt-4 pt-3 border-t border-[#E8DFC8]">
+        <p className="text-xs text-gray-400 text-center">Ref. commande : {orderId}</p>
+      </div>
+    </div>
+  );
+
+  if (step === "processing") {
+    return (
+      <div className="bg-[#FAFAF7] min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#4A7C59] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <h2 className="font-serif text-xl font-bold text-[#2D2D2D] mb-2">Traitement en cours…</h2>
+          <p className="text-gray-500 text-sm">Validation du paiement et envoi de la commande</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "payment") {
+    return (
+      <div className="bg-[#FAFAF7] min-h-screen">
+        <div className="max-w-site mx-auto px-4 md:px-8 py-8">
+          <div className="flex items-center gap-3 mb-8">
+            <button onClick={() => setStep("info")} className="text-[#4A7C59] text-sm hover:underline">← Modifier mes infos</button>
+            <ChevronRight size={14} className="text-gray-400" />
+            <span className="text-sm font-medium text-[#2D2D2D]">Paiement</span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-xl p-6 border border-[#E8DFC8]">
+                <div className="flex items-center gap-2 mb-4">
+                  <Lock size={18} className="text-[#4A7C59]" />
+                  <h2 className="font-serif font-bold text-lg text-[#2D2D2D]">Paiement sécurisé</h2>
+                </div>
+
+                <div className="bg-[#F5EDD7] rounded-lg p-4 mb-4">
+                  <p className="text-sm text-gray-700 font-medium mb-1">Traité par GeniusPay</p>
+                  <p className="text-xs text-gray-500">Vos données bancaires sont chiffrées et sécurisées. Nous ne stockons jamais vos informations de carte.</p>
+                </div>
+
+                {/* GeniusPay payment form placeholder — will be replaced by the SDK iframe */}
+                <div
+                  id="geniuspay-container"
+                  className="border-2 border-dashed border-[#E8DFC8] rounded-lg p-6 text-center text-gray-400 text-sm mb-4 min-h-[120px] flex flex-col items-center justify-center gap-2"
+                >
+                  <CreditCard size={28} className="text-[#4A7C59] opacity-60" />
+                  <p>Interface de paiement GeniusPay</p>
+                  <p className="text-xs">(Le module de paiement apparaîtra ici une fois la clé API configurée)</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 justify-center mb-4">
+                  {["Visa", "Mastercard", "Apple Pay", "Google Pay", "PayPal"].map(p => (
+                    <span key={p} className="bg-gray-50 px-3 py-1 rounded text-xs text-gray-600 font-medium border border-gray-200">{p}</span>
+                  ))}
+                </div>
+
+                {payError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-center">
+                    <p className="text-red-600 text-sm">{payError}</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handlePayment}
+                  className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2"
+                >
+                  <ShieldCheck size={18} />
+                  Payer {formatPrice(total)} et confirmer
+                </button>
+
+                <p className="text-xs text-gray-400 text-center mt-3">En confirmant, vous acceptez nos <a href="/cgv" className="underline">CGV</a></p>
+              </div>
+
+              <div className="bg-white rounded-xl p-5 border border-[#E8DFC8]">
+                <h3 className="font-medium text-sm text-[#2D2D2D] mb-2">Livraison à</h3>
+                <p className="text-sm text-gray-600">
+                  {form.firstName} {form.lastName}<br />
+                  {form.address}, {form.postalCode} {form.city}<br />
+                  {COUNTRIES.find(c => c.code === form.country)?.name ?? form.country}
+                </p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-1">
+              <OrderSummary />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#FAFAF7] min-h-screen">
       <div className="max-w-site mx-auto px-4 md:px-8 py-8">
         <h1 className="font-serif text-3xl font-bold text-[#2D2D2D] mb-8">Finaliser la commande</h1>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleInfoNext}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white rounded-xl p-6 border border-[#E8DFC8]">
                 <h2 className="font-serif font-bold text-lg text-[#2D2D2D] mb-4">Informations personnelles</h2>
@@ -144,65 +313,21 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl p-6 border border-[#E8DFC8]">
-                <h2 className="font-serif font-bold text-lg text-[#2D2D2D] mb-4">Paiement sécurisé</h2>
-                <div className="bg-[#F5EDD7] rounded-lg p-4 text-center">
-                  <Lock size={24} className="mx-auto text-[#4A7C59] mb-2" />
-                  <p className="text-sm text-gray-600">Paiement traité de façon sécurisée par GeniusPay</p>
-                  <div className="flex justify-center flex-wrap gap-2 mt-3">
-                    {["Visa", "Mastercard", "Apple Pay", "Google Pay", "PayPal"].map(p => (
-                      <span key={p} className="bg-white px-2 py-1 rounded text-xs text-gray-700 font-medium border border-gray-200">{p}</span>
-                    ))}
-                  </div>
-                </div>
+              <div className="bg-white rounded-xl p-4 border border-[#E8DFC8] flex items-center gap-3">
+                <Lock size={16} className="text-[#4A7C59] flex-shrink-0" />
+                <p className="text-xs text-gray-500">Paiement sécurisé par GeniusPay — Visa, Mastercard, Apple Pay, Google Pay, PayPal</p>
               </div>
             </div>
 
-            {/* Order summary */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl p-6 border border-[#E8DFC8] sticky top-24">
-                <h2 className="font-serif font-bold text-lg text-[#2D2D2D] mb-4">Votre commande</h2>
-                <div className="space-y-3 mb-4">
-                  {items.map(item => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-gray-600 flex-1 mr-2">{item.name} × {item.quantity}</span>
-                      <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t border-[#E8DFC8] pt-3 space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Sous-total</span>
-                    <span>{formatPrice(subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Livraison</span>
-                    <span className={freeShipping ? "text-[#4A7C59]" : ""}>{freeShipping ? "Gratuite" : formatPrice(shipping)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-[#2D2D2D] pt-2">
-                    <span>Total</span>
-                    <span className="text-xl text-[#4A7C59]">{formatPrice(total)}</span>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={createOrder.isPending}
-                  className="btn-primary w-full mt-5 py-4 text-base flex items-center justify-center gap-2 disabled:opacity-60"
-                >
-                  {createOrder.isPending ? (
-                    <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Traitement...</span>
-                  ) : (
-                    <span className="flex items-center gap-2"><ShieldCheck size={18} />Confirmer ma commande</span>
-                  )}
-                </button>
-
-                {createOrder.isError && (
-                  <p className="text-red-500 text-xs mt-2 text-center">Une erreur s'est produite. Veuillez réessayer.</p>
-                )}
-
-                <p className="text-xs text-gray-400 text-center mt-3">En confirmant, vous acceptez nos CGV</p>
-              </div>
+              <OrderSummary />
+              <button
+                type="submit"
+                className="btn-primary w-full mt-4 py-4 text-base flex items-center justify-center gap-2"
+              >
+                Continuer vers le paiement
+                <ChevronRight size={18} />
+              </button>
             </div>
           </div>
         </form>

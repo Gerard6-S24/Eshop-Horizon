@@ -26,7 +26,12 @@ export async function getCjToken(): Promise<string> {
     throw new Error(`CJ auth failed: ${res.status} ${await res.text()}`);
   }
 
-  const data = await res.json() as { code: number; message: string; data: { accessToken: string; accessTokenExpiryDate: string } };
+  const data = await res.json() as {
+    code: number;
+    message: string;
+    data: { accessToken: string; accessTokenExpiryDate: string };
+  };
+
   if (data.code !== 200) {
     throw new Error(`CJ auth error: ${data.message}`);
   }
@@ -81,7 +86,12 @@ export async function createCjOrder(payload: CjCreateOrderPayload): Promise<{ cj
     throw new Error(`CJ createOrder failed: ${res.status} ${await res.text()}`);
   }
 
-  const data = await res.json() as { code: number; message: string; data: { orderId: string } };
+  const data = await res.json() as {
+    code: number;
+    message: string;
+    data: { orderId: string };
+  };
+
   if (data.code !== 200) {
     throw new Error(`CJ order error: ${data.message}`);
   }
@@ -89,58 +99,25 @@ export async function createCjOrder(payload: CjCreateOrderPayload): Promise<{ cj
   return { cjOrderId: data.data.orderId };
 }
 
-export function mapWooAddressToCj(
-  shipping: WooShipping,
-  billing: WooBilling,
-): CjShippingAddress {
-  return {
-    countryCode: shipping.country || billing.country,
-    country: shipping.country || billing.country,
-    province: shipping.state || billing.state,
-    city: shipping.city || billing.city,
-    address: [shipping.address_1, shipping.address_2].filter(Boolean).join(", ") ||
-             [billing.address_1, billing.address_2].filter(Boolean).join(", "),
-    zip: shipping.postcode || billing.postcode,
-    name: [shipping.first_name, shipping.last_name].filter(Boolean).join(" ") ||
-          [billing.first_name, billing.last_name].filter(Boolean).join(" "),
-    phone: billing.phone,
-    email: billing.email,
-  };
-}
-
-export interface WooShipping {
-  first_name: string;
-  last_name: string;
-  address_1: string;
-  address_2?: string;
+export function mapAddressToCj(form: {
+  firstName: string;
+  lastName: string;
+  address: string;
   city: string;
-  state: string;
-  postcode: string;
+  postalCode: string;
   country: string;
-}
-
-export interface WooBilling extends WooShipping {
-  email: string;
   phone: string;
-}
-
-export interface WooLineItem {
-  id: number;
-  product_id: number;
-  quantity: number;
-  sku: string;
-  name: string;
-  price: number;
-}
-
-export interface WooOrder {
-  id: number;
-  number: string;
-  status: string;
-  billing: WooBilling;
-  shipping: WooShipping;
-  line_items: WooLineItem[];
-  total: string;
-  currency: string;
-  customer_note?: string;
+  email: string;
+}): CjShippingAddress {
+  return {
+    countryCode: form.country,
+    country: form.country,
+    province: "",
+    city: form.city,
+    address: form.address,
+    zip: form.postalCode,
+    name: `${form.firstName} ${form.lastName}`.trim(),
+    phone: form.phone,
+    email: form.email,
+  };
 }
