@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: Eshop-Horizon
+    runtime: node
+    buildCommand: pnpm install && pnpm --filter @workspace/api-server build
+    startCommand: node artifacts/api-server/dist/index.mjs
+
+  - type: static
+    name: Eshop-Horizon-1
+    buildCommand: pnpm install && pnpm --filter eshop build
+    staticPublishPath: artifacts/eshop/dist
