@@ -32,9 +32,9 @@ export default function ProductPage() {
   // État pour la couleur sélectionnée par le client
   const [selectedColor, setSelectedColor] = useState<string>("");
 
-  // Sécurisation de l'initialisation de la couleur avec useEffect (Évite les boucles de rendu détectées par ChatGPT)
+  // Sécurisation de l'initialisation de la couleur
   useEffect(() => {
-    if (product?.colors?.length && !selectedColor) {
+    if (product && Array.isArray(product.colors) && product.colors.length > 0 && !selectedColor) {
       setSelectedColor(product.colors[0]);
     }
   }, [product, selectedColor]);
@@ -62,7 +62,6 @@ export default function ProductPage() {
   const savings = product.originalPrice - product.price;
 
   const handleAddToCart = () => {
-    // On passe aussi la couleur sélectionnée au panier d'achat
     const nameWithColor = selectedColor 
       ? `${product.name} (${getColorName(selectedColor)})` 
       : product.name;
@@ -78,7 +77,6 @@ export default function ProductPage() {
     setTimeout(() => setAdded(false), 2000);
   };
 
-  // Petite fonction pour afficher le nom lisible de la couleur
   function getColorName(hex: string) {
     switch(hex.toLowerCase()) {
       case "#0000ff": return "Bleu";
@@ -109,7 +107,7 @@ export default function ProductPage() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
-          {/* Images gallery - Affiche maintenant la vraie image produit */}
+          {/* Images gallery */}
           <div className="flex flex-col gap-3">
             <div className="w-full aspect-square bg-white rounded-xl flex items-center justify-center border border-[#E8DFC8] overflow-hidden">
               {product.imageUrl ? (
@@ -142,15 +140,15 @@ export default function ProductPage() {
             </div>
 
             <ul className="mb-6 space-y-1.5">
-              {(product.benefits ?? []).slice(0, 3).map((b, i) => (
+              {product.benefits && Array.isArray(product.benefits) && product.benefits.slice(0, 3).map((b, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
                   <span className="text-[#4A7C59] font-bold mt-0.5">✓</span>{b}
                 </li>
               ))}
             </ul>
 
-            {/* SECTION DES COULEURS (COLOR SWATCHES) */}
-            {product.colors && product.colors.length > 0 && (
+            {/* SECTION DES COULEURS AVEC SÉCURITÉ CONTRE LES SITES BLANCS */}
+            {product.colors && Array.isArray(product.colors) && product.colors.length > 0 && (
               <div className="mb-6">
                 <span className="text-sm font-medium text-gray-700 block mb-2">
                   Couleur : <span className="font-bold text-[#2D2D2D]">{getColorName(selectedColor)}</span>
@@ -234,29 +232,33 @@ export default function ProductPage() {
             {tab === "utilisation" && <p>{product.usage ?? "Suisez les instructions figurant sur l'emballage."}</p>}
             {tab === "avis" && (
               <div className="space-y-4">
-                {(product.reviews ?? []).map(r => (
-                  <div key={r.id} className="bg-white rounded-xl p-4 border border-[#E8DFC8]">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 bg-[#F5EDD7] rounded-full flex items-center justify-center font-bold text-[#4A7C59] text-sm">{r.author[0]}</div>
-                      <div>
-                        <div className="font-semibold text-[#2D2D2D] text-sm">{r.author} — {r.city}</div>
-                        <StarRating rating={r.rating} />
+                {product.reviews && Array.isArray(product.reviews) ? (
+                  product.reviews.map(r => (
+                    <div key={r.id} className="bg-white rounded-xl p-4 border border-[#E8DFC8]">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 bg-[#F5EDD7] rounded-full flex items-center justify-center font-bold text-[#4A7C59] text-sm">{r.author[0]}</div>
+                        <div>
+                          <div className="font-semibold text-[#2D2D2D] text-sm">{r.author} — {r.city}</div>
+                          <StarRating rating={r.rating} />
+                        </div>
                       </div>
+                      <p className="text-gray-600 text-sm">"{r.comment}"</p>
                     </div>
-                    <p className="text-gray-600 text-sm">"{r.comment}"</p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm">Aucun avis pour le moment.</p>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        {/* FAQ */}
-        {(product.faq ?? []).length > 0 && (
+        {/* FAQ sécurisée */}
+        {product.faq && Array.isArray(product.faq) && product.faq.length > 0 && (
           <div className="mb-10 max-w-2xl">
             <h3 className="font-serif text-2xl font-bold text-[#2D2D2D] mb-5">Questions fréquentes</h3>
             <div className="divide-y divide-[#E8DFC8] border border-[#E8DFC8] rounded-xl overflow-hidden">
-              {(product.faq ?? []).map((f, i) => (
+              {product.faq.map((f, i) => (
                 <div key={i} className="bg-white">
                   <button
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
