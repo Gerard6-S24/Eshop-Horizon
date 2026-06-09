@@ -58,6 +58,8 @@ function formatProduct(p: typeof productsTable.$inferSelect) {
     usage: p.usage,
     reviews: p.reviews ?? [],
     faq: p.faq ?? [],
+    // Correction : On envoie enfin le tableau des couleurs au site visuel !
+    colors: p.colors ?? [],
     relatedProductSlugs: p.relatedProductSlugs ?? [],
   };
 }
