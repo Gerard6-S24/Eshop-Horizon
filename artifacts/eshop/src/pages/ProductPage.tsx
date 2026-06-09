@@ -6,15 +6,13 @@ import { useCart } from "../context/CartContext";
 import { StarRating } from "../components/StarRating";
 
 const PRODUCT_NAMES: Record<string, string> = {
-  "lingettes-hypoallergeniques": "Lingettes Hypoallergéniques PetCare — La Douceur que Votre Animal Mérite",
-  "brosse-anti-poils": "Brosse Anti-Poils Réutilisable PetCare — Fini les Poils Partout",
-  "rouleau-ramasse-poils": "Rouleau Ramasse-Poils PetCare — La Solution Virale des Propriétaires",
-  "pet-hair-removal-glove": "Pet Hair Removal Glove PetCare — Fini les Poils Incrustés en 1 Seul Passage",
+  "gant-deshedding-petcare": "Gant de Déshedding PetCare — Fini les Poils Incrustés en 1 Seul Passage",
+  "brosse-anti-poils-petcare": "Brosse Anti-Poils Réutilisable PetCare — Fini les Poils Partout",
+  "lint-roller-petcare": "Lint Roller Anti-Poils PetCare — La Solution Virale des Propriétaires",
 };
 
 const ORDER_BUMPS: Record<string, { text: string; price: string }> = {
-  "lingettes-hypoallergeniques": { text: "Ajoutez la Brosse Anti-Poils avec 30% de réduction", price: "13,99€ au lieu de 19,99€" },
-  "pet-hair-removal-glove": { text: "Complétez avec les Lingettes PetCare — Pack Hygiène Complet -15%", price: "16,99€ au lieu de 19,99€" },
+  "gant-deshedding-petcare": { text: "Ajoutez la Brosse Anti-Poils avec 30% de réduction", price: "13,99€ au lieu de 19,99€" },
 };
 
 type TabKey = "description" | "ingredients" | "utilisation" | "avis";
@@ -30,6 +28,9 @@ export default function ProductPage() {
   const [tab, setTab] = useState<TabKey>("description");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [added, setAdded] = useState(false);
+  
+  // État pour la couleur sélectionnée par le client
+  const [selectedColor, setSelectedColor] = useState<string>("");
 
   const formatPrice = (n: number) => n.toFixed(2).replace(".", ",") + "€";
 
@@ -50,14 +51,41 @@ export default function ProductPage() {
     );
   }
 
+  // Initialiser la première couleur si aucune n'est sélectionnée
+  if (product.colors && product.colors.length > 0 && !selectedColor) {
+    setSelectedColor(product.colors[0]);
+  }
+
   const displayName = PRODUCT_NAMES[slug] ?? product.name;
   const savings = product.originalPrice - product.price;
 
   const handleAddToCart = () => {
-    addItem({ productId: product.id, slug: product.slug, name: product.name, price: product.price, quantity: qty });
+    // On passe aussi la couleur sélectionnée au panier d'achat
+    const nameWithColor = selectedColor 
+      ? `${product.name} (${getColorName(selectedColor)})` 
+      : product.name;
+
+    addItem({ 
+      productId: product.id, 
+      slug: product.slug, 
+      name: nameWithColor, 
+      price: product.price, 
+      quantity: qty 
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
+
+  // Petite fonction pour afficher le nom lisible de la couleur
+  function getColorName(hex: string) {
+    switch(hex.toLowerCase()) {
+      case "#0000ff": return "Bleu";
+      case "#ffc0cb": return "Rose";
+      case "#008000": return "Vert";
+      case "#000000": return "Noir";
+      default: return "Unique";
+    }
+  }
 
   const bump = ORDER_BUMPS[slug];
 
@@ -75,31 +103,18 @@ export default function ProductPage() {
         <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
           <Link href="/" className="hover:text-[#4A7C59] no-underline">Accueil</Link>
           <span>/</span>
-          <Link href="/produits" className="hover:text-[#4A7C59] no-underline">Produits</Link>
-          <span>/</span>
           <span className="text-[#2D2D2D]">{product.name}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
-          {/* Images gallery */}
+          {/* Images gallery - Affiche maintenant la vraie image produit */}
           <div className="flex flex-col gap-3">
-            <div className="w-full aspect-square bg-gradient-to-br from-[#F5EDD7] to-[#e8f0e6] rounded-xl flex items-center justify-center border border-[#E8DFC8]">
-              <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#7D9B76" strokeWidth="1" className="opacity-60">
-                <path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5"/>
-                <path d="M14.267 5.172c0-1.39 1.577-2.493 3.5-2.172 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.96-1.45-2.344-2.5"/>
-                <path d="M4.42 11.247A13.15 13.15 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444c0-1.061-.162-2.2-.493-3.309m-9.243-6.082A8.801 8.801 0 0 1 12 5c.78 0 1.5.108 2.161.306"/>
-              </svg>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {[1,2,3,4].map(i => (
-                <div key={i} className="aspect-square bg-gradient-to-br from-[#F5EDD7] to-[#e8f0e6] rounded-lg border border-[#E8DFC8] cursor-pointer hover:border-[#7D9B76] transition-colors flex items-center justify-center">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7D9B76" strokeWidth="1.5" className="opacity-50">
-                    <path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5"/>
-                    <path d="M14.267 5.172c0-1.39 1.577-2.493 3.5-2.172 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.96-1.45-2.344-2.5"/>
-                    <path d="M4.42 11.247A13.15 13.15 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444c0-1.061-.162-2.2-.493-3.309m-9.243-6.082A8.801 8.801 0 0 1 12 5c.78 0 1.5.108 2.161.306"/>
-                  </svg>
-                </div>
-              ))}
+            <div className="w-full aspect-square bg-white rounded-xl flex items-center justify-center border border-[#E8DFC8] overflow-hidden">
+              {product.imageUrl ? (
+                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-gray-400 text-sm">Pas d'image disponible</div>
+              )}
             </div>
           </div>
 
@@ -131,6 +146,26 @@ export default function ProductPage() {
                 </li>
               ))}
             </ul>
+
+            {/* SECTION DES COULEURS (COLOR SWATCHES) */}
+            {product.colors && product.colors.length > 0 && (
+              <div className="mb-6">
+                <span className="text-sm font-medium text-gray-700 block mb-2">
+                  Couleur : <span className="font-bold text-[#2D2D2D]">{getColorName(selectedColor)}</span>
+                </span>
+                <div className="flex items-center gap-3">
+                  {product.colors.map((colorHex: string) => (
+                    <button
+                      key={colorHex}
+                      onClick={() => setSelectedColor(colorHex)}
+                      className={`w-8 h-8 rounded-full border-2 transition-transform ${selectedColor === colorHex ? "border-[#4A7C59] scale-110 shadow-md" : "border-gray-300"}`}
+                      style={{ backgroundColor: colorHex }}
+                      title={getColorName(colorHex)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Quantity + CTA */}
             <div className="flex items-center gap-3 mb-4">
@@ -192,9 +227,9 @@ export default function ProductPage() {
                       );
                     })}
                   </ul>
-                : <p className="text-gray-500">Composants naturels sélectionnés. Voir l'emballage pour la liste complète.</p>
+                : <p className="text-gray-500">Composants naturels sélectionnés. Sans danger pour votre animal de compagnie.</p>
             )}
-            {tab === "utilisation" && <p>{product.usage ?? "Suivez les instructions figurant sur l'emballage."}</p>}
+            {tab === "utilisation" && <p>{product.usage ?? "Suisez les instructions figurant sur l'emballage."}</p>}
             {tab === "avis" && (
               <div className="space-y-4">
                 {(product.reviews ?? []).map(r => (
@@ -214,32 +249,6 @@ export default function ProductPage() {
           </div>
         </div>
 
-        {/* Emotional benefits */}
-        {(product.emotionalBenefits ?? []).length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div className="bg-white rounded-xl p-6 border border-[#E8DFC8]">
-              <h3 className="font-serif font-bold text-[#2D2D2D] mb-4">Pourquoi vous allez l'adorer</h3>
-              <ul className="space-y-2">
-                {(product.emotionalBenefits ?? []).map((b, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-[#C9A84C] mt-0.5">★</span>{b}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="bg-white rounded-xl p-6 border border-[#E8DFC8]">
-              <h3 className="font-serif font-bold text-[#2D2D2D] mb-4">Bénéfices pratiques</h3>
-              <ul className="space-y-2">
-                {(product.benefits ?? []).map((b, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-[#4A7C59] mt-0.5">✓</span>{b}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-
         {/* FAQ */}
         {(product.faq ?? []).length > 0 && (
           <div className="mb-10 max-w-2xl">
@@ -258,43 +267,6 @@ export default function ProductPage() {
                     <div className="px-5 pb-4 text-gray-600 text-sm leading-relaxed border-t border-[#E8DFC8]">{f.answer}</div>
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Order bump */}
-        {bump && (
-          <div className="bg-[#F5EDD7] border-2 border-[#C9A84C] rounded-xl p-5 mb-10 flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <p className="font-semibold text-[#2D2D2D]">{bump.text}</p>
-              <p className="text-[#4A7C59] font-bold">{bump.price}</p>
-            </div>
-            <button className="btn-primary whitespace-nowrap">Ajouter</button>
-          </div>
-        )}
-
-        {/* Related products */}
-        {(product.relatedProductSlugs ?? []).length > 0 && (
-          <div>
-            <h3 className="font-serif text-2xl font-bold text-[#2D2D2D] mb-6">Les clients ont aussi acheté</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-              {(product.relatedProductSlugs ?? []).map(relSlug => (
-                <Link key={relSlug} href={`/produits/${relSlug}`} className="no-underline">
-                  <div className="product-card p-4 flex items-center gap-3">
-                    <div className="w-16 h-16 bg-gradient-to-br from-[#F5EDD7] to-[#e8f0e6] rounded-lg flex items-center justify-center flex-shrink-0">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7D9B76" strokeWidth="1.5">
-                        <path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5"/>
-                        <path d="M14.267 5.172c0-1.39 1.577-2.493 3.5-2.172 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.96-1.45-2.344-2.5"/>
-                        <path d="M4.42 11.247A13.15 13.15 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444c0-1.061-.162-2.2-.493-3.309m-9.243-6.082A8.801 8.801 0 0 1 12 5c.78 0 1.5.108 2.161.306"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="font-medium text-[#2D2D2D] text-sm line-clamp-2">{PRODUCT_NAMES[relSlug] ?? relSlug}</div>
-                      <div className="text-[#4A7C59] text-xs mt-1">Voir le produit →</div>
-                    </div>
-                  </div>
-                </Link>
               ))}
             </div>
           </div>
