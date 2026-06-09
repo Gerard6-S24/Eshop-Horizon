@@ -14,6 +14,7 @@ export const productsTable = pgTable("products", {
   isNew: boolean("is_new").notNull().default(false),
   isTrending: boolean("is_trending").notNull().default(false),
   badge: text("badge"),
+  imageUrl: text("image_url"),
   benefits: jsonb("benefits").$type<string[]>().notNull().default([]),
   emotionalBenefits: jsonb("emotional_benefits").$type<string[]>().notNull().default([]),
   ingredients: text("ingredients"),
