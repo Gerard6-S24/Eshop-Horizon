@@ -69,12 +69,19 @@ export default function Home() {
             {(products ?? []).map(p => (
               <div key={p.slug} className="product-card">
                 <div className="relative">
-                  <div className="w-full h-52 bg-gradient-to-br from-[#F5EDD7] to-[#e8f0e6] flex items-center justify-center">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#7D9B76" strokeWidth="1.5">
-                      <path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5"/>
-                      <path d="M14.267 5.172c0-1.39 1.577-2.493 3.5-2.172 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.96-1.45-2.344-2.5"/>
-                      <path d="M4.42 11.247A13.15 13.15 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444c0-1.061-.162-2.2-.493-3.309m-9.243-6.082A8.801 8.801 0 0 1 12 5c.78 0 1.5.108 2.161.306"/>
-                    </svg>
+                  {/* Div Image Cloudinary corrigée et injectée à la place de l'ancien SVG */}
+                  <div className="w-full h-52 overflow-hidden bg-white rounded-t-xl flex items-center justify-center border-b border-[#E8DFC8]">
+                    {p.imageUrl ? (
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-gradient-to-br from-[#F5EDD7] to-[#e8f0e6]">
+                        Pas d'image disponible
+                      </div>
+                    )}
                   </div>
                   <div className="absolute top-3 left-3 flex gap-1 flex-wrap">
                     {p.isNew && <span className="badge-new">NOUVEAU</span>}
