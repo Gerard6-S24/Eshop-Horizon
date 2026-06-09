@@ -22,10 +22,22 @@ export default function Products() {
   const apiUrl = "https://eshop-horizon.onrender.com";
 
   useEffect(() => {
-    fetch(`${apiUrl}/api/products`)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
+    fetch(`${apiUrl}/api/products`, { signal: controller.signal })
       .then(r => r.json())
-      .then(data => { setProducts(data); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then(data => {
+        clearTimeout(timeout);
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
+
+    return () => { clearTimeout(timeout); controller.abort(); };
   }, []);
 
   const formatPrice = (n: number) => n.toFixed(2).replace(".", ",") + "€";
