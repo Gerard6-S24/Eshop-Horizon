@@ -51,6 +51,7 @@ function formatProduct(p: typeof productsTable.$inferSelect) {
     isNew: p.isNew,
     isTrending: p.isTrending,
     badge: p.badge,
+    imageUrl: p.imageUrl,
     benefits: p.benefits ?? [],
     emotionalBenefits: p.emotionalBenefits ?? [],
     ingredients: p.ingredients,
