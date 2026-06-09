@@ -4,7 +4,6 @@ import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { db } from "@workspace/db";
-import { productsTable } from "@workspace/db";
 import { sql } from "drizzle-orm";
 
 const app: Express = express();
@@ -37,7 +36,6 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true }));
 
-// Auto-create tables if they don't exist
 async function initDb() {
   try {
     await db.execute(sql`
@@ -53,6 +51,7 @@ async function initDb() {
         is_new BOOLEAN NOT NULL DEFAULT false,
         is_trending BOOLEAN NOT NULL DEFAULT false,
         badge TEXT,
+        image_url TEXT,
         benefits JSONB NOT NULL DEFAULT '[]',
         emotional_benefits JSONB NOT NULL DEFAULT '[]',
         ingredients TEXT,
@@ -62,13 +61,16 @@ async function initDb() {
         related_product_slugs JSONB NOT NULL DEFAULT '[]'
       )
     `);
+    await db.execute(sql`
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT
+    `);
     logger.info("✅ Database initialized");
   } catch (err) {
     logger.error({ err }, "❌ Database init failed");
   }
 }
 
-initDb();
+initDb().catch(err => logger.error({ err }, "DB init error"));
 
 app.use("/api", router);
 
