@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "wouter";
 import { ShoppingCart, Minus, Plus, ChevronDown, ChevronUp, Truck, RotateCcw, ShieldCheck } from "lucide-react";
 import { useGetProduct, getGetProductQueryKey } from "@workspace/api-client-react";
@@ -32,6 +32,13 @@ export default function ProductPage() {
   // État pour la couleur sélectionnée par le client
   const [selectedColor, setSelectedColor] = useState<string>("");
 
+  // Sécurisation de l'initialisation de la couleur avec useEffect (Évite les boucles de rendu détectées par ChatGPT)
+  useEffect(() => {
+    if (product?.colors?.length && !selectedColor) {
+      setSelectedColor(product.colors[0]);
+    }
+  }, [product, selectedColor]);
+
   const formatPrice = (n: number) => n.toFixed(2).replace(".", ",") + "€";
 
   if (isLoading) {
@@ -49,11 +56,6 @@ export default function ProductPage() {
         <Link href="/" className="btn-primary inline-block no-underline">Retour à l'accueil</Link>
       </div>
     );
-  }
-
-  // Initialiser la première couleur si aucune n'est sélectionnée
-  if (product.colors && product.colors.length > 0 && !selectedColor) {
-    setSelectedColor(product.colors[0]);
   }
 
   const displayName = PRODUCT_NAMES[slug] ?? product.name;
