@@ -17,17 +17,24 @@ interface Product {
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const { addItem } = useCart();
-  const apiUrl = import.meta.env.VITE_API_URL ?? "https://eshop-horizon.onrender.com";
+  const apiUrl = "https://eshop-horizon.onrender.com";
 
   useEffect(() => {
     fetch(`${apiUrl}/api/products`)
       .then(r => r.json())
-      .then(setProducts)
-      .catch(console.error);
+      .then(data => { setProducts(data); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
   const formatPrice = (n: number) => n.toFixed(2).replace(".", ",") + "€";
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-10 h-10 border-4 border-[#4A7C59] border-t-transparent rounded-full animate-spin"/>
+    </div>
+  );
 
   return (
     <div className="bg-[#FAFAF7] min-h-screen">
@@ -38,13 +45,15 @@ export default function Products() {
           {products.map(p => (
             <div key={p.slug} className="product-card">
               <div className="relative">
-                <div className="w-full h-52 bg-gradient-to-br from-[#F5EDD7] to-[#e8f0e6] flex items-center justify-center overflow-hidden">
+                <div className="w-full h-52 bg-gradient-to-br from-[#F5EDD7] to-[#e8f0e6] overflow-hidden">
                   {p.imageUrl ? (
                     <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
                   ) : (
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#7D9B76" strokeWidth="1.5">
-                      <circle cx="12" cy="12" r="10"/>
-                    </svg>
+                    <div className="w-full h-full flex items-center justify-center">
+                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#7D9B76" strokeWidth="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                      </svg>
+                    </div>
                   )}
                 </div>
                 {p.isNew && <span className="absolute top-3 left-3 badge-new">NOUVEAU</span>}
@@ -60,10 +69,7 @@ export default function Products() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => addItem({ productId: p.id, slug: p.slug, name: p.name, price: p.price })}
-                    className="btn-primary flex-1 text-xs py-2"
-                  >
+                  <button onClick={() => addItem({ productId: p.id, slug: p.slug, name: p.name, price: p.price })} className="btn-primary flex-1 text-xs py-2">
                     Ajouter
                   </button>
                   <Link href={`/produits/${p.slug}`} className="btn-secondary flex-1 text-xs py-2 text-center no-underline">
