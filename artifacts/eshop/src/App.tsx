@@ -75,7 +75,8 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <CartProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        {/* Correction de la base du routeur demandée pour Render */}
+        <WouterRouter base="">
           <Header />
           <main>
             <Router />
