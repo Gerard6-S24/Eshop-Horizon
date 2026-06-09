@@ -18,6 +18,7 @@ async function seed() {
       isTrending: true,
       badge: "Viral TikTok",
       imageUrl: "https://res.cloudinary.com/df8gsalta/image/upload/v1781010418/Screenshot_20260605-075925-405_oso9nt.png",
+      colors: ["#0000FF", "#FFC0CB", "#008000", "#000000"], // Bleu, Rose, Vert, Noir
       benefits: ["Élimine 95% des poils", "Massage relaxant", "Compatible tous animaux"],
       emotionalBenefits: ["Canapé propre", "Animal détendu", "Maison sans poils"],
       ingredients: null,
@@ -43,6 +44,7 @@ async function seed() {
       isTrending: false,
       badge: "NOUVEAU",
       imageUrl: "https://res.cloudinary.com/df8gsalta/image/upload/v1781010420/Screenshot_20260605-085404-055_xasm8g.png",
+      colors: ["#0000FF", "#FFC0CB", "#008000"], // Bleu, Rose, Vert
       benefits: ["Démêle sans douleur", "Réduit les nœuds", "Pelage brillant"],
       emotionalBenefits: ["Animal confortable", "Routine agréable", "Résultats visibles"],
       ingredients: null,
@@ -67,6 +69,7 @@ async function seed() {
       isTrending: true,
       badge: null,
       imageUrl: "https://res.cloudinary.com/df8gsalta/image/upload/v1781010417/Screenshot_20260605-095714-221_m9esac.png",
+      colors: ["#0000FF", "#000000"], // Bleu, Noir
       benefits: ["Élimine 100% des poils", "Réutilisable", "Écologique"],
       emotionalBenefits: ["Vêtements propres", "Prêt en 30 secondes", "Zéro déchet"],
       ingredients: null,
