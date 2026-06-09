@@ -32,6 +32,7 @@ router.get("/seed-products", async (req, res) => {
       isNew: false,
       isTrending: true,
       badge: "Viral TikTok",
+      imageUrl: "https://cf.cjdropshipping.com/08e48c84-5e01-4f9a-9d25-3934c7139f86.jpg",
       benefits: ["Élimine 95% des poils", "Massage relaxant", "Compatible tous animaux"],
       emotionalBenefits: ["Canapé propre", "Animal détendu", "Maison sans poils"],
       usage: "Mouvements circulaires sur le pelage.",
@@ -50,6 +51,7 @@ router.get("/seed-products", async (req, res) => {
       isNew: true,
       isTrending: false,
       badge: "NOUVEAU",
+      imageUrl: "https://cf.cjdropshipping.com/15677856/1118339712066.jpg",
       benefits: ["Démêle sans douleur", "Réduit les nœuds", "Pelage brillant"],
       emotionalBenefits: ["Animal confortable", "Routine agréable"],
       usage: "Brossez dans le sens du pelage 5 minutes par jour.",
@@ -68,6 +70,7 @@ router.get("/seed-products", async (req, res) => {
       isNew: false,
       isTrending: true,
       badge: null,
+      imageUrl: "https://oss-cf.cjdropshipping.com/product/2025/08/22/02/36e416d8-7a2a-45cf-80c5-05c08c642469.jpg",
       benefits: ["Élimine 100% des poils", "Réutilisable", "Écologique"],
       emotionalBenefits: ["Vêtements propres", "Prêt en 30 secondes"],
       usage: "Va-et-vient sur le tissu.",
@@ -76,7 +79,7 @@ router.get("/seed-products", async (req, res) => {
       relatedProductSlugs: ["gant-deshedding-petcare", "brosse-anti-poils-petcare"],
     },
   ]);
-  res.json({ success: true, message: "✅ 3 produits insérés !" });
+  res.json({ success: true, message: "✅ 3 produits insérés avec images !" });
 });
 
 export default router;
