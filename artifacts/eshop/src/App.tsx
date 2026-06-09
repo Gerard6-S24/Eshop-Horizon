@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "./context/CartContext";
 import { Header } from "./components/Header";
@@ -30,7 +30,6 @@ function NotFound() {
   );
 }
 
-/** Refire PageView à chaque changement de route (SPA navigation). */
 function PageViewTracker() {
   const [location] = useLocation();
   useEffect(() => {
@@ -75,14 +74,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <CartProvider>
-        {/* Correction de la base du routeur demandée pour Render */}
-        <WouterRouter base="">
-          <Header />
-          <main>
-            <Router />
-          </main>
-          <Footer />
-        </WouterRouter>
+        <Header />
+        <main>
+          <Router />
+        </main>
+        <Footer />
       </CartProvider>
     </QueryClientProvider>
   );
